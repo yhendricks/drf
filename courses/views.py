@@ -8,3 +8,9 @@ class ListCreateCourse(generics.ListCreateAPIView):
     serializer_class = serializers.CourseSerializer
 
 
+class RetrieveUpdateDestroyCourse(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+
+
+
