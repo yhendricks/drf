@@ -1,7 +1,13 @@
 from rest_framework import generics
+from rest_framework import mixins
+from rest_framework import viewsets
+from rest_framework import permissions
+from rest_framework.decorators import detail_route
+from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from . import models
 from . import serializers
+
 
 # Create your views here.
 class ListCreateCourse(generics.ListCreateAPIView):
@@ -36,3 +42,36 @@ class RetrieveUpdateDestroyReview(generics.RetrieveUpdateDestroyAPIView):
             course_id=self.kwargs.get('course_pk'),
             pk=self.kwargs.get('pk')
         )
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+
+    @detail_route(methods=['get'])
+    def reviews(self, request, pk=None):
+        self.pagination_class.page_size = 1
+        reviews = models.Review.objects.filter(course_id=pk)
+
+        page = self.paginate_queryset(reviews)
+
+        if page is not None:
+            serializer = serializers.ReviewSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = serializers.ReviewSerializer(
+            reviews, many=True)
+        return Response(serializer.data)
+
+
+class ReviewViewSet(mixins.CreateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
+                    viewsets.GenericViewSet):
+    queryset = models.Review.objects.all()
+    serializer_class = serializers.ReviewSerializer
+
+
+
